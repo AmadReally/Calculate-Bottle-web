@@ -1,0 +1,12 @@
+{
+  "name": "kira-botol-terengganu",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kalkulator dan rekod penggunaan botol harian: anggaran Kuala Terengganu, data sebenar UMT, berita Terengganu.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"tests/*.test.js\""
+  }
+}

@@ -1,0 +1,68 @@
+﻿# MemoryCore v2 â€” keadaan peribadi tidak dikongsi
+/.Mcore/.simple-login.json
+/.Mcore/.simple-login.json.tmp
+/.Mcore/.runtime/
+/.Mcore/.lock
+/.Mcore/users/
+/.Mcore/state.json
+/.Mcore/team.json.tmp
+
+# Rahsia
+.env
+.env.*
+!.env.example
+
+# Folder konfigurasi provider TIDAK dibenarkan dalam projek ini
+/.claude/
+/.codex/
+/.agents/
+/.qwen/
+/.gemini/
+/.cursor/
+/.windsurf/
+
+# Fail penunjuk provider dijana SETEMPAT oleh `mcore.py adapter` â€” jangan commit.
+# Repo hanya menyimpan AGENTS.md (entri universal); lihat .Mcore/adapters/README.md.
+/CLAUDE.md
+/GEMINI.md
+/QWEN.md
+/.cursorrules
+/.windsurfrules
+
+# Pelbagai
+[Tt]emp/
+*.exe
+*.pyc
+__pycache__/
+
+# Enjin Rust: binaan setempat sahaja (sumber kekal dalam repo)
+/.Mcore/engine/target/
+
+# Eksport dataset dijana semula bila perlu (index/projects boleh commit)
+/.Mcore/.dataset/exports/
+
+# Graf pengetahuan + laporan kajian: artefak boleh-jana
+/.Mcore/.graph/
+/.Mcore/research-out/
+/work-out/
+
+# Projek Kira Botol Terengganu
+/data/
+node_modules/
+
+
+# Memori projek lain yang dibawa bersama Mcore v2 (graphify, sand3d, mcore...): tidak dikongsi dengan projek ini
+/.Mcore/.dataset/
+/.Mcore/.vault/
+/.Mcore/.cache/
+
+# MemoryCore: kekal setempat, bukan sebahagian app
+/.Mcore/
+/AGENTS.md
+/rules.md
+
+# Slide pemilik projek, setempat sahaja
+/Slide-Kira-Botol-Terengganu.pptx
+
+# Dokumen dan bahan reka bentuk: setempat sahaja
+/docs/
