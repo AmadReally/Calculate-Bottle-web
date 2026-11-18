@@ -23,7 +23,12 @@ Data disimpan dalam `data/botol.db` (SQLite). Tukar port dengan `$env:PORT=8080`
 
 ## Akaun penyumbang
 
-Tiada halaman daftar. Pentadbir cipta akaun di komputer server:
+**Daftar sendiri dengan kod jemputan (pilihan).** Set `INVITE_CODE` (sekurang-kurangnya 8 aksara) dan kongsi kod itu.
+Dialog log masuk akan tunjuk "Daftar dengan kod jemputan"; akaun baharu sentiasa `contributor`. Tukar kod untuk
+menghentikan kod lama; buang `INVITE_CODE` untuk menutup pendaftaran. Had: 10 cubaan daftar sejam setiap IP.
+Akaun yang sudah dicipta tidak terjejas bila kod ditukar; sekat dengan `disable` jika perlu.
+
+Pentadbir juga boleh cipta akaun di komputer server:
 
 ```powershell
 node scripts/user.js add naim --role admin   # kata laluan diminta secara tersembunyi

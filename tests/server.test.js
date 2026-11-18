@@ -136,6 +136,37 @@ test('passwords are stored as scrypt hashes', () => {
   assert.ok(!row.pass_hash.includes(PASS));
 });
 
+const register = (body, headers = {}) => fetch(base + '/api/auth/register', { method: 'POST',
+  headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
+test('sign-up is closed without INVITE_CODE', async () => {
+  delete process.env.INVITE_CODE;
+  assert.equal((await (await fetch(base + '/api/config')).json()).signup, false);
+  assert.equal((await register({ invite: '', username: 'siti', password: PASS })).status, 404);
+  process.env.INVITE_CODE = 'pendek'; // under 8 characters still counts as closed
+  assert.equal((await register({ invite: 'pendek', username: 'siti', password: PASS })).status, 404);
+});
+test('sign-up with the invite code creates a contributor and signs in', async () => {
+  process.env.INVITE_CODE = 'kod-jemputan-ujian';
+  assert.equal((await (await fetch(base + '/api/config')).json()).signup, true);
+  assert.equal((await register({ invite: 'salah-kod', username: 'siti', password: PASS })).status, 403);
+  assert.equal((await register({ invite: 'kod-jemputan-ujian', username: 'Si', password: PASS })).status, 422);
+  assert.equal((await register({ invite: 'kod-jemputan-ujian', username: 'siti', password: 'pendek' })).status, 422);
+  assert.equal((await register({ invite: 'kod-jemputan-ujian', username: 'ali', password: PASS })).status, 409);
+  // A role in the body is ignored: sign-up never makes an admin.
+  const r = await register({ invite: ' kod-jemputan-ujian ', username: 'Siti', password: PASS, role: 'admin' });
+  assert.equal(r.status, 201);
+  assert.match(r.headers.get('set-cookie'), /HttpOnly/);
+  const me = await (await fetch(base + '/api/auth/me', { headers: { cookie: r.headers.get('set-cookie').split(';')[0] } })).json();
+  assert.deepEqual([me.user.username, me.user.role], ['siti', 'contributor']);
+  assert.equal((await register({ invite: 'kod-jemputan-ujian', username: 'x', password: PASS }, { origin: 'https://jahat.example' })).status, 403);
+});
+test('sign-up is rate limited per IP', async () => {
+  process.env.INVITE_CODE = 'kod-jemputan-ujian';
+  let last;
+  for (let i = 0; i < 12; i++) last = await register({ invite: 'teka-' + i, username: 'teka' + i, password: PASS });
+  assert.equal(last.status, 429);
+  delete process.env.INVITE_CODE;
+});
 test('blocks cross-site and non-JSON writes (CSRF)', async () => {
   assert.equal((await post(ok, aliCookie, { origin: 'https://jahat.example' })).status, 403);
   const form = await fetch(base + '/api/umt/entries', { method: 'POST', headers: { 'content-type': 'text/plain', cookie: aliCookie }, body: JSON.stringify(ok) });

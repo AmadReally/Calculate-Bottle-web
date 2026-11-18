@@ -265,6 +265,7 @@ const csvCell = (v) => {
 const limits = {
   login: auth.rateLimiter(10, 15 * 60_000), // per IP and per username
   write: auth.rateLimiter(60, 60_000),      // entry create/delete, per user
+  register: auth.rateLimiter(10, 60 * 60_000), // sign-up attempts per IP, so the invite code cannot be guessed
 };
 const tooMany = (res, wait) => send(res, 429, { error: `Terlalu banyak cubaan. Cuba lagi dalam ${wait} saat.` }, undefined, { 'retry-after': String(wait) });
 
@@ -286,7 +287,7 @@ export async function handle(req, res) {
     if (p.startsWith('/api/')) {
       if (method !== 'GET' && method !== 'HEAD' && !sameOrigin(req)) return send(res, 403, { error: 'Asal permintaan tidak dibenarkan.' });
 
-      if (p === '/api/config' && method === 'GET') return send(res, 200, { ...CONFIG, today: today() });
+      if (p === '/api/config' && method === 'GET') return send(res, 200, { ...CONFIG, today: today(), signup: auth.inviteOpen() });
       if (p === '/api/version' && method === 'GET') return send(res, 200, { v: appVersion() });
 
       if (p === '/api/auth/me' && method === 'GET') return send(res, 200, { user });
@@ -298,6 +299,25 @@ export async function handle(req, res) {
         const s = auth.login(db, name, body?.password);
         if (!s) return send(res, 401, { error: 'Nama pengguna atau kata laluan salah.' });
         return send(res, 200, { user: s.user }, undefined, { 'set-cookie': auth.sessionCookie(s.token, s.maxAge, isHttps(req)) });
+      }
+      // Self sign-up with the shared invite code. New accounts are always contributors, never admins.
+      if (p === '/api/auth/register' && method === 'POST') {
+        if (!auth.inviteOpen()) return send(res, 404, { error: 'Pendaftaran ditutup. Minta akaun daripada pentadbir.' });
+        const wait = limits.register('ip:' + clientIp(req));
+        if (wait) return tooMany(res, wait);
+        const body = await readJson(req);
+        if (!auth.inviteMatches(body?.invite)) return send(res, 403, { error: 'Kod jemputan salah.' });
+        const name = String(body?.username ?? '').trim().toLowerCase();
+        const password = String(body?.password ?? '');
+        const bad = auth.checkNewCredentials(name, password);
+        if (bad) return send(res, 422, { error: bad });
+        try { auth.createUser(db, name, password, 'contributor'); }
+        catch (e) {
+          if (String(e.message).includes('UNIQUE')) return send(res, 409, { error: 'Nama pengguna sudah diambil. Pilih nama lain.' });
+          throw e;
+        }
+        const s = auth.login(db, name, password);
+        return send(res, 201, { user: s.user }, undefined, { 'set-cookie': auth.sessionCookie(s.token, s.maxAge, isHttps(req)) });
       }
       if (p === '/api/auth/logout' && method === 'POST') {
         auth.logout(db, token);

@@ -47,28 +47,49 @@ const errorBlock = (msg, retry = true) =>
 const loading = () => '<div aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>';
 
 // Log masuk dalam dialog; selesai dengan true bila berjaya.
+// Dialog yang sama untuk daftar (kod jemputan) bila pentadbir membuka pendaftaran.
 function askLogin() {
   const d = $('#login-dlg'), f = $('#login');
-  f.reset(); $('#l-err').textContent = '';
+  let signup = false;
+  const setMode = (on) => {
+    signup = on;
+    $('#login-h').textContent = on ? 'Daftar akaun penyumbang' : 'Log masuk untuk simpan';
+    $('#l-hint').textContent = on ? 'Masukkan kod jemputan daripada pentadbir, kemudian pilih nama pengguna dan kata laluan anda sendiri.'
+      : 'Kiraan boleh dibuat tanpa akaun. Menyimpan rekod perlukan akaun penyumbang' + (config?.signup ? '.' : '; minta daripada pentadbir projek.');
+    $('#l-invite-field').hidden = !on; $('#l-invite').required = on;
+    $('#l-user-hint').hidden = !on; $('#l-pass-hint').hidden = !on;
+    $('#l-pass').autocomplete = on ? 'new-password' : 'current-password';
+    $('#l-submit').textContent = on ? 'Daftar' : 'Log masuk';
+    $('#l-mode').textContent = on ? 'Sudah ada akaun? Log masuk' : 'Belum ada akaun? Daftar dengan kod jemputan';
+    $('#l-err').textContent = '';
+    (on ? $('#l-invite') : $('#l-user')).focus();
+  };
+  f.reset();
+  $('#l-mode').hidden = !config?.signup;
   d.showModal();
+  setMode(false);
   return new Promise((resolve) => {
     let done = false;
-    const finish = (v) => { if (done) return; done = true; f.removeEventListener('submit', onSubmit); $('#login-cancel').removeEventListener('click', onCancel); d.removeEventListener('close', onClose); if (d.open) d.close(); resolve(v); };
+    const finish = (v) => { if (done) return; done = true; f.removeEventListener('submit', onSubmit); $('#login-cancel').removeEventListener('click', onCancel); $('#l-mode').removeEventListener('click', onMode); d.removeEventListener('close', onClose); if (d.open) d.close(); resolve(v); };
     const onCancel = () => finish(false);
     const onClose = () => finish(false);
+    const onMode = () => setMode(!signup);
     const onSubmit = async (e) => {
       e.preventDefault();
-      const btn = f.querySelector('[type=submit]'); btn.disabled = true; $('#l-err').textContent = '';
+      const btn = $('#l-submit'); btn.disabled = true; $('#l-err').textContent = '';
+      const data = Object.fromEntries(new FormData(f));
+      if (!signup) delete data.invite;
       try {
-        ({ user: me } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(f))) }));
+        ({ user: me } = await api(signup ? '/api/auth/register' : '/api/auth/login', { method: 'POST', body: JSON.stringify(data) }));
+        if (signup) toast('Akaun ' + me.username + ' dicipta');
         finish(true);
-      } catch (err) { $('#l-err').textContent = err.message; f.password.value = ''; f.password.focus(); }
+      } catch (err) { $('#l-err').textContent = err.message; f.password.value = ''; (err.status === 403 && signup ? $('#l-invite') : f.password).focus(); }
       finally { btn.disabled = false; }
     };
     f.addEventListener('submit', onSubmit);
     $('#login-cancel').addEventListener('click', onCancel);
+    $('#l-mode').addEventListener('click', onMode);
     d.addEventListener('close', onClose);
-    $('#l-user').focus();
   });
 }
 

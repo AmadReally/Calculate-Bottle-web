@@ -38,19 +38,26 @@
   <dialog id="login-dlg" aria-labelledby="login-h">
     <form id="login" method="dialog" novalidate>
       <h2 id="login-h">Log masuk untuk simpan</h2>
-      <p class="hint">Kiraan boleh dibuat tanpa akaun. Menyimpan rekod perlukan akaun penyumbang; minta daripada pentadbir projek.</p>
+      <p class="hint" id="l-hint">Kiraan boleh dibuat tanpa akaun. Menyimpan rekod perlukan akaun penyumbang; minta daripada pentadbir projek.</p>
+      <div class="field" id="l-invite-field" hidden>
+        <label for="l-invite">Kod jemputan</label>
+        <input id="l-invite" name="invite" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="200">
+      </div>
       <div class="field">
         <label for="l-user">Nama pengguna</label>
         <input id="l-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" required>
+        <span class="hint" id="l-user-hint" hidden>3–32 aksara: huruf kecil, nombor, titik, sengkang atau garis bawah.</span>
       </div>
       <div class="field">
         <label for="l-pass">Kata laluan</label>
         <input id="l-pass" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+        <span class="hint" id="l-pass-hint" hidden>Sekurang-kurangnya 10 aksara.</span>
       </div>
       <p class="error" id="l-err" role="alert"></p>
+      <p><button type="button" class="btn btn-text" id="l-mode" hidden>Belum ada akaun? Daftar dengan kod jemputan</button></p>
       <div class="row-end">
         <button type="button" class="btn" id="login-cancel">Batal</button>
-        <button type="submit" class="btn btn-solid">Log masuk</button>
+        <button type="submit" class="btn btn-solid" id="l-submit">Log masuk</button>
       </div>
     </form>
   </dialog>
